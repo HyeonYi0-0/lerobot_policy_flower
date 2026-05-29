@@ -1,0 +1,108 @@
+# FLOWER VLA Training Config — single camera: observation.images.left_top
+#
+# Usage:
+#   lerobot-train config_path=lerobot_policy_flower/src/lerobot_policy_flower/train_config.yaml
+#
+# Setting input_features here prevents make_policy() from overwriting it with
+# all dataset features (factory.py — `if not cfg.input_features:` branch).
+# Only left_top is encoded by Florence-2 in encode_observations().
+
+dataset:
+  repo_id: "local/bi_so_follower"
+  # Local dataset root; null to download from HuggingFace Hub.
+  # Expected layout: root/repo_id/{meta,data,videos}/
+  root: null
+  video_backend: "pyav"
+
+policy:
+  type: flower
+
+  # Only keys listed here are used in encode_observations().
+  # VISUAL keys are exposed via config.image_features and determine present_img_keys.
+  input_features:
+    observation.images.left_top:
+      type: VISUAL
+      shape: [240, 320, 3]
+    observation.state:
+      type: STATE
+      shape: [12]
+
+  output_features:
+    action:
+      type: ACTION
+      shape: [12]
+
+  # VLM
+  vlm_path: "microsoft/Florence-2-large"
+  freeze_florence: false
+  freeze_vision_tower: false
+  vlm_prompt_style: "default"
+  token_dropout: 0.1
+
+  # Action chunking (dataset fps=20, bi-arm 12-DoF)
+  chunk_size: 50
+  n_action_steps: 50
+  num_sampling_steps: 8
+  lowdim_obs_dim: 12
+  action_dim: 12
+
+  # DiT architecture
+  dit_dim: 1024
+  n_heads: 16
+  n_layers: 18
+  attn_pdrop: 0.1
+  resid_pdrop: 0.1
+  mlp_pdrop: 0.1
+  sampling_type: "uniform"
+
+  # RoPE
+  use_rope: true
+  use_nope: false
+  query_seq_len: 100
+  rope_theta: 32.0
+
+  # Model flags
+  use_proprio: true
+
+  # Sampling frequency passed to FreqEmbedder (Hz)
+  frequency: 20
+
+  # Action space index: 3 = dual_lerobot (12D joint, 2-arm)
+  action_type_index: 3
+
+  # Prompt parameters (used when vlm_prompt_style == "default")
+  format_instruction_robot_name: "dual lerobot"
+  format_instruction_action_space: "12D Joint Position"
+  format_instruction_num_arms: 2
+  format_instruction_prompt_style: "minimal"
+
+  action_type_adaln: true
+  use_causal_attention: true
+  use_cross_attn: true
+  use_adaln_cond: false
+  use_readout_token: false
+  return_act_chunk: false
+
+  # Optimizer
+  optimizer_lr: 2.0e-5
+  optimizer_weight_decay: 0.05
+  optimizer_betas: [0.9, 0.95]
+
+  # Pretrained checkpoint path; null to train from scratch
+  pretrained_model_path: null
+
+  push_to_hub: false
+  repo_id: null
+
+# Training
+steps: 100000
+batch_size: 8
+num_workers: 4
+save_freq: 10000
+log_freq: 500
+eval_freq: 0
+seed: 1000
+output_dir: "outputs/train/flower_left_top_only"
+
+wandb:
+  enable: false

@@ -1,0 +1,17 @@
+[project]
+name = "lerobot_policy_flower"
+version = "0.1.0"
+dependencies = [
+    "transformers==4.57.1",
+    "timm>=0.9.0",
+    "safetensors",
+    "accelerate>=1.7.0,<2.0.0",
+]
+requires-python = ">= 3.12"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lerobot_policy_flower"]
