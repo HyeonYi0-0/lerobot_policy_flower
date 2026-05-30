@@ -207,7 +207,7 @@ class FLOWERVLACore(nn.Module):
 
         image_features = torch.cat(all_image_features, dim=1)
 
-        lang_text = batch["observation.language_instruction"]
+        lang_text = batch["task"]
         constructed_prompts = self.construct_prompts({"lang_text": lang_text})
         text_inputs = self.tokenizer(
             constructed_prompts,
@@ -217,7 +217,7 @@ class FLOWERVLACore(nn.Module):
             max_length=77,
         ).to(device)
         text_embeds = self.vlm.get_input_embeddings()(text_inputs["input_ids"])
-        lang_attention_mask = text_inputs["attention_mask"].float()  # (B, text_len)
+        lang_attention_mask = text_inputs["attention_mask"].to(default_type)  # (B, text_len)
 
         task_prompt = self.prompt_embeds.expand(B, -1, -1).to(device)
         merged_embeds = torch.cat(
@@ -283,7 +283,7 @@ class FLOWERVLACore(nn.Module):
             if mask.any():
                 encoded[mask] = self.proprio_encoders[action_name](
                     proprio[mask].to(default_dtype)
-                )
+                ).to(default_dtype)
 
         return encoded
 
@@ -464,7 +464,7 @@ class FLOWERVLACore(nn.Module):
             if mask.any():
                 adim = self.action_space_index.get_action_dim(action_idx)
                 valid_dims[mask, :, :adim] = 1
-                encoded[mask] = self.action_encoders[action_name](z[mask, :, :adim])
+                encoded[mask] = self.action_encoders[action_name](z[mask, :, :adim]).to(default_dtype)
 
         return encoded, valid_dims
 
@@ -484,7 +484,7 @@ class FLOWERVLACore(nn.Module):
             mask = (action_type == action_idx)
             if mask.any():
                 adim = self.action_space_index.get_action_dim(action_idx)
-                pred = self.action_decoders[action_name](z[mask])
+                pred = self.action_decoders[action_name](z[mask]).to(default_dtype)
                 decoded[mask, :, :adim] = pred[..., :adim] * valid_dims[mask, :, :adim]
 
         return decoded
@@ -506,9 +506,9 @@ class FLOWERVLACore(nn.Module):
             mask = (action_type == action_idx)
             if mask.any():
                 action_name = self.action_space_index.get_action_name(action_idx)
-                action_mod = self.adaln[action_name](global_cond[mask])
+                action_mod = self.adaln[action_name](global_cond[mask]).to(default_type)
                 for i, signal in enumerate(action_mod):
-                    mod_signals[i][mask] = signal
+                    mod_signals[i][mask] = signal.to(default_type)
 
         return mod_signals
 
