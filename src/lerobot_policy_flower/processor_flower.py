@@ -36,7 +36,7 @@ from lerobot.utils.constants import (
 )
 
 if TYPE_CHECKING:
-    from .configuration_flower import FlowerPolicyConfig
+    from .configuration_flower import FlowerConfig
 
 
 @dataclass
@@ -112,7 +112,7 @@ class FlowerImageNetNormalizeProcessorStep(ProcessorStep):
 
 
 def make_flower_pre_post_processors(
-    config: "FlowerPolicyConfig",
+    config: "FlowerConfig",
     dataset_stats: dict[str, dict[str, torch.Tensor]] | None = None,
 ) -> tuple[
     PolicyProcessorPipeline[dict[str, Any], dict[str, Any]],

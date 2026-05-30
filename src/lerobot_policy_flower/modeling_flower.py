@@ -10,21 +10,21 @@ from torch import Tensor
 from lerobot.policies.pretrained import PreTrainedPolicy
 from lerobot.utils.constants import ACTION
 
-from .configuration_flower import FlowerPolicyConfig
+from .configuration_flower import FlowerConfig
 from .modeling_flower_core import FLOWERVLACore
 from .transforms import RandomShiftsAug
 
 
 class FlowerPolicy(PreTrainedPolicy):
-    config_class = FlowerPolicyConfig
+    config_class = FlowerConfig
     name = "flower"
 
     def __init__(
         self,
-        config: FlowerPolicyConfig,
-        dataset_stats: dict[str, Any] | None = None,
+        config: FlowerConfig,
+        **kwargs,
     ):
-        super().__init__(config, dataset_stats)
+        super().__init__(config)
         config.validate_features()
         self.config = config
         self.model = FLOWERVLACore(config)

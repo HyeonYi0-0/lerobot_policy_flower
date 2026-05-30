@@ -72,7 +72,7 @@ class TriStageLRSchedulerConfig(LRSchedulerConfig):
 
 @PreTrainedConfig.register_subclass("flower")
 @dataclass
-class FlowerPolicyConfig(PreTrainedConfig):
+class FlowerConfig(PreTrainedConfig):
     # VLM settings
     vlm_path: str = "microsoft/Florence-2-large"
     freeze_florence: bool = False

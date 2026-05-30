@@ -8,11 +8,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 if TYPE_CHECKING:
-    from .configuration_flower import FlowerPolicyConfig
+    from .configuration_flower import FlowerConfig
 
 
 class FLOWERVLACore(nn.Module):
-    def __init__(self, config: "FlowerPolicyConfig"):
+    def __init__(self, config: "FlowerConfig"):
         super().__init__()
         from lerobot.utils.import_utils import is_package_available
 
@@ -37,7 +37,7 @@ class FLOWERVLACore(nn.Module):
     # Initialisation helpers
     # ------------------------------------------------------------------
 
-    def _init_from_config(self, config: "FlowerPolicyConfig") -> None:
+    def _init_from_config(self, config: "FlowerConfig") -> None:
         from .flower.models.utils import ActionIndex, generate_policy_prompt
 
         self.use_rope = config.use_rope and not config.use_nope
@@ -95,7 +95,7 @@ class FLOWERVLACore(nn.Module):
 
         self.vlm_token_dropout = nn.Dropout(self.token_dropout)
 
-    def _setup_dit_components(self, config: "FlowerPolicyConfig", hidden_dim: int) -> None:
+    def _setup_dit_components(self, config: "FlowerConfig", hidden_dim: int) -> None:
         from .flower.models.networks.transformers import (
             ActionSpaceEmbedderParameter,
             FlowBlock,
@@ -198,9 +198,10 @@ class FLOWERVLACore(nn.Module):
             if image_tensor.ndim == 4:              # (B, C, H, W) → (B, 1, C, H, W)
                 image_tensor = image_tensor.unsqueeze(1)
             B_, T, C, H, W = image_tensor.shape
-            feats = self.vlm._encode_image(
-                image_tensor.view(-1, C, H, W).to(device).to(default_type)
-            ).to(default_type)
+            imgs = image_tensor.view(-1, C, H, W).to(device).to(default_type)
+            if H != 224 or W != 224:
+                imgs = F.interpolate(imgs, size=(224, 224), mode="bilinear", align_corners=False)
+            feats = self.vlm._encode_image(imgs).to(default_type)
             feats = feats.view(B_, T * feats.shape[1], -1)
             all_image_features.append(feats)
 
